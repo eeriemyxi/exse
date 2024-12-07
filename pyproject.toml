@@ -1,0 +1,21 @@
+[project]
+name = "exse"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.32.3",
+    "spotipy>=2.24.0",
+    "textual>=0.89.1",
+    "yarl>=1.18.3",
+    "youtube-search>=2.1.2",
+]
+
+[project.scripts]
+exse    = "exse.__main__:main"
+exse-yt = "exse.yt.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
