@@ -1,6 +1,6 @@
-import argparse
 import configparser
 import io
+import logging
 import pathlib
 import sys
 
@@ -9,6 +9,7 @@ from spotipy.oauth2 import SpotifyOAuth
 
 from exse import util, yt
 
+log = logging.getLogger(__file__)
 config = configparser.ConfigParser()
 config.read(util.get_config_location(sys.platform) / "config.ini")
 
@@ -75,5 +76,5 @@ def stream_track(track):
         yield chunk
         wcache.write(chunk)
         read_yet += len(chunk)
-        
+
     wcache.close()

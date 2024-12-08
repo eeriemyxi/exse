@@ -1,6 +1,10 @@
+import logging
+
 from textual.app import App, ComposeResult
 from textual.containers import HorizontalGroup, VerticalScroll
 from textual.widgets import Button, Digits, Footer, Header
+
+log = logging.getLogger(__file__)
 
 
 class TimeDisplay(Digits):

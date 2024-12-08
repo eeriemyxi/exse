@@ -1,6 +1,5 @@
 import configparser
-import pathlib
-import subprocess
+import logging
 import sys
 
 import requests
@@ -8,6 +7,8 @@ import yarl
 import youtube_search
 
 from exse import util
+
+log = logging.getLogger(__file__)
 
 config = configparser.ConfigParser()
 config.read(util.get_config_location(sys.platform) / "config.ini")
@@ -21,6 +22,7 @@ YT_PLAYER_HEADERS = {
 CLIENT = {"clientName": "ANDROID", "clientVersion": "19.10.35", "androidSdkVersion": 30}
 
 HTTP_CHUNK_SIZE = 1024 * 1024
+
 
 def fetch_video_data(idx: str, api_key: str):
     resp = requests.post(
@@ -38,7 +40,9 @@ def find_optimal_stream(vid_data: dict) -> dict:
         return f
 
 
-def iter_stream_from_id(idx: str, start: int = 0, end: int | None = None, chunk_size: int = HTTP_CHUNK_SIZE):
+def iter_stream_from_id(
+    idx: str, start: int = 0, end: int | None = None, chunk_size: int = HTTP_CHUNK_SIZE
+):
     # TODO: implement server-side caching?
     headers = {
         "User-Agent": "Lavf/58.76.100",
@@ -48,7 +52,6 @@ def iter_stream_from_id(idx: str, start: int = 0, end: int | None = None, chunk_
     vid_data = fetch_video_data(idx, YT_API_KEY)
     opt_stream = find_optimal_stream(vid_data)
     opt_stream_url = opt_stream["url"]
-    opt_stream_length = opt_stream["contentLength"]
 
     resp = requests.get(opt_stream_url, headers=headers, stream=True)
     if resp.status_code == 416:
