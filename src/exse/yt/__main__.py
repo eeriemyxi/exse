@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import logging
 import sys
 
@@ -7,37 +8,46 @@ from exse import util
 log = logging.getLogger(__file__)
 
 
-def cmd_query(args):
+async def cmd_daemon(args):
+    from exse.yt import daemon
+
+    await daemon.main()
+
+
+async def cmd_query(args):
     from exse import yt
 
     stream = yt.iter_stream_from_query(args.query)
-    _ = next(stream)
 
-    for chunk in stream:
+    async for chunk in stream:
         sys.stdout.buffer.write(chunk)
 
 
-def cmd_play(args):
+async def cmd_play(args):
     from exse import yt
 
     stream = yt.iter_stream_from_id(args.video_id)
-    _ = next(stream)
 
-    for chunk in stream:
+    async for chunk in stream:
         sys.stdout.buffer.write(chunk)
 
 
-parser = argparse.ArgumentParser(description="TODO")
+parser = argparse.ArgumentParser(description="Exse's YT backend.")
 
 subparsers = parser.add_subparsers()
 
-parser_stream = subparsers.add_parser("query", help="TODO")
-parser_stream.add_argument("query")
-parser_stream.set_defaults(func=cmd_query)
+parser_daemon = subparsers.add_parser(
+    "daemon", help="Serve a websocket server to talk to Exse's YT backend."
+)
+parser_daemon.set_defaults(func=cmd_daemon)
 
-parser_stream = subparsers.add_parser("play", help="TODO")
-parser_stream.add_argument("video_id")
-parser_stream.set_defaults(func=cmd_play)
+parser_query = subparsers.add_parser("query", help="TODO")
+parser_query.add_argument("query")
+parser_query.set_defaults(func=cmd_query)
+
+parser_play = subparsers.add_parser("play", help="TODO")
+parser_play.add_argument("video_id")
+parser_play.set_defaults(func=cmd_play)
 
 
 def main():
@@ -58,7 +68,7 @@ def main():
         parser.print_help()
         exit(1)
 
-    args.func(args)
+    asyncio.run(args.func(args))
 
 
 if __name__ == "__main__":

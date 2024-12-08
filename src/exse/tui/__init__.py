@@ -40,6 +40,6 @@ class StopwatchApp(App):
         )
 
 
-def main():
+async def main():
     app = StopwatchApp()
-    app.run()
+    await app.run_async()

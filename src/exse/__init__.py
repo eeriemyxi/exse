@@ -1,9 +1,12 @@
+import asyncio
 import configparser
+import functools
 import io
 import logging
 import pathlib
 import sys
 
+import aiofiles
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
@@ -20,14 +23,19 @@ SP_REDIRECT_URI = config.get("spotify", "REDIRECT_URI")
 CACHE_DIR = pathlib.Path(config.get("general", "CACHE_DIR"))
 
 
-def setup_spotify():
-    sp = spotipy.Spotify(
-        auth_manager=SpotifyOAuth(
-            client_id=SP_CLIENT_ID,
-            client_secret=SP_CLIENT_SECRET,
-            redirect_uri=SP_REDIRECT_URI,
-            scope="user-library-read",
-        )
+async def setup_spotify():
+    loop = asyncio.get_running_loop()
+    sp = await loop.run_in_executor(
+        None,
+        functools.partial(
+            spotipy.Spotify,
+            auth_manager=SpotifyOAuth(
+                client_id=SP_CLIENT_ID,
+                client_secret=SP_CLIENT_SECRET,
+                redirect_uri=SP_REDIRECT_URI,
+                scope="user-library-read",
+            ),
+        ),
     )
     return sp
 
@@ -36,45 +44,56 @@ def cache_file(title):
     return (CACHE_DIR / title).with_suffix(".m4a")
 
 
-def readable_cache_for_song(title):
+async def readable_cache_for_song(title):
     try:
-        with open(cache_file(title), "rb") as file:
-            return file.read()
+        async with aiofiles.open(cache_file(title), "rb") as file:
+            return await file.read()
     except FileNotFoundError:
         return b""
 
 
-def streamify(data, chunk_size):
+async def streamify(data, chunk_size):
     idata = io.BytesIO(data)
     while True:
         chunk = idata.read(chunk_size)
         if not chunk:
             return
+        await asyncio.sleep(0)
         yield chunk
 
 
-def stream_track(track):
+async def stream_track(track):
     ftitle = ", ".join(a["name"] for a in track["artists"]) + " - " + track["name"]
     chunk_size = yt.HTTP_CHUNK_SIZE
     read_yet = 0
 
-    rcache = readable_cache_for_song(ftitle)
-    wcache = open(cache_file(ftitle), "wb")
+    rcache = await readable_cache_for_song(ftitle)
+    wcache = await aiofiles.open(cache_file(ftitle), "wb")
 
     stream = streamify(rcache, chunk_size)
 
     while True:
         try:
-            chunk = next(stream)
-        except StopIteration:
+            chunk = await anext(stream)
+        except StopAsyncIteration:
             stream = yt.iter_stream_from_query(ftitle, read_yet)
             try:
-                chunk = next(stream)
-            except (StopIteration, ValueError):
+                chunk = await anext(stream)
+            except (StopAsyncIteration, ValueError):
                 break
 
         yield chunk
-        wcache.write(chunk)
+        await wcache.write(chunk)
         read_yet += len(chunk)
 
-    wcache.close()
+    await wcache.close()
+
+
+async def stream_track_from_id(idx: str):
+    loop = asyncio.get_running_loop()
+
+    spotify = await setup_spotify()
+    track = await loop.run_in_executor(None, functools.partial(spotify.track, idx))
+
+    async for chunk in stream_track(track):
+        yield chunk

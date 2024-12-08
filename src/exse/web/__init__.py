@@ -1,6 +1,9 @@
 import logging
 
-from reactpy import component, html, run
+import uvicorn
+from fastapi import FastAPI
+from reactpy import component, html
+from reactpy.backend.fastapi import configure
 
 import exse
 
@@ -12,5 +15,11 @@ def App():
     return html.h1("Hello, world!")
 
 
-def main():
-    run(App)
+async def main():
+    import os
+
+    app = FastAPI()
+    configure(app, App)
+    uconf = uvicorn.Config(app, port=8080, log_level=os.environ["UVICORN_LOG_LEVEL"])
+    server = uvicorn.Server(uconf)
+    await server.serve()

@@ -3,7 +3,7 @@ import logging
 import json
 
 from websockets.server import serve
-import exse
+import exse.yt
 
 log = logging.getLogger(__name__)
 
@@ -12,7 +12,9 @@ async def daemon(websocket):
     async for message in websocket:
         response = json.loads(message)
         if response["from"] == "id":
-            stream = exse.stream_track_from_id(response["id"])
+            stream = exse.yt.iter_stream_from_id(response["id"])
+        elif response["from"] == "query":
+            stream = exse.yt.iter_stream_from_query(response["query"])
 
         async for chunk in stream:
             await websocket.send(chunk)

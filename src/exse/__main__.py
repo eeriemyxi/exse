@@ -1,58 +1,59 @@
 import argparse
+import asyncio
 import logging
 import sys
 
 from exse import util
 from exse.yt.__main__ import parser as yt_parser
 
+LOG_LEVEL = "INFO"
 log = logging.getLogger(__file__)
 
 
-def cmd_daemon(args):
-    import asyncio
-
+async def cmd_daemon(args):
     from exse import daemon
 
-    asyncio.run(daemon.main())
+    await daemon.main()
 
 
-def cmd_stream(args):
+async def cmd_stream(args):
     import exse
 
-    spotify = exse.setup_spotify()
+    spotify = await exse.setup_spotify()
     track = spotify.track(args.track_id)
 
-    for chunk in exse.stream_track(track):
+    async for chunk in exse.stream_track(track):
         sys.stdout.buffer.write(chunk)
 
 
-def cmd_load_web(args):
+async def cmd_load_web(args):
+    import os
+
+    os.environ["UVICORN_LOG_LEVEL"] = LOG_LEVEL
     from exse import web
 
-    web.main()
+    await web.main()
 
 
-def cmd_load_tui(args):
+async def cmd_load_tui(args):
     from exse import tui
 
-    tui.main()
+    await tui.main()
 
 
-def _show_version():
+async def _show_version():
     import importlib.metadata
 
     print(importlib.metadata.version("exse"))
 
 
-LOG_LEVEL = "INFO"
-
 parser = argparse.ArgumentParser(description="TODO")
 parser.add_argument(
     "-L",
     "--log-level",
-    help="Set log level. Options: DEBUG, INFO (default), CRITICAL, ERROR",
+    help="Set log level. Options: debug, info (default), critical, error",
     type=str,
-    default="INFO",
+    default="info",
 )
 parser.add_argument(
     "-v",
@@ -64,7 +65,7 @@ subparsers = parser.add_subparsers()
 
 parser_daemon = subparsers.add_parser(
     "daemon",
-    help="TODO",
+    help="Serve a websocket server to talk to Exse.",
 )
 parser_daemon.set_defaults(func=cmd_daemon)
 
@@ -83,7 +84,7 @@ parser_yt = subparsers.add_parser(
 )
 
 args = parser.parse_args()
-LOG_LEVEL = args.log_level
+LOG_LEVEL = args.log_level.casefold()
 
 logging.basicConfig(**util.default_logging_config(LOG_LEVEL))
 
@@ -96,7 +97,7 @@ if not hasattr(args, "func"):
     exit(1)
 
 try:
-    args.func(args)
+    asyncio.run(args.func(args))
 except KeyboardInterrupt:
     pass
 
