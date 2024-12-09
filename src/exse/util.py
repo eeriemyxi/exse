@@ -24,6 +24,6 @@ def get_config_location(platform: str):
     if platform == "linux":
         assert "HOME" in os.environ, "Please set $HOME env var."
         return pathlib.Path(os.environ["HOME"]) / ".config/exse"
-    elif platform == "win32":
+    if platform == "win32":
         assert "APP_DATA" in os.environ
         return pathlib.Path(os.environ["APP_DATA"]) / "exse"

@@ -1,8 +1,9 @@
 import asyncio
-import logging
 import json
+import logging
 
 from websockets.server import serve
+
 import exse
 
 log = logging.getLogger(__name__)

@@ -1,26 +1,15 @@
 import asyncio
-import configparser
 import functools
 import io
 import logging
-import pathlib
-import sys
 
 import aiofiles
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-from exse import util, yt
+from exse import constants, yt
 
 log = logging.getLogger(__file__)
-config = configparser.ConfigParser()
-config.read(util.get_config_location(sys.platform) / "config.ini")
-
-SP_CLIENT_ID = config.get("spotify", "CLIENT_ID")
-SP_CLIENT_SECRET = config.get("spotify", "CLIENT_SECRET")
-SP_REDIRECT_URI = config.get("spotify", "REDIRECT_URI")
-
-CACHE_DIR = pathlib.Path(config.get("general", "CACHE_DIR"))
 
 
 async def setup_spotify():
@@ -30,10 +19,10 @@ async def setup_spotify():
         functools.partial(
             spotipy.Spotify,
             auth_manager=SpotifyOAuth(
-                client_id=SP_CLIENT_ID,
-                client_secret=SP_CLIENT_SECRET,
-                redirect_uri=SP_REDIRECT_URI,
-                scope="user-library-read",
+                client_id=constants.SP_CLIENT_ID,
+                client_secret=constants.SP_CLIENT_SECRET,
+                redirect_uri=constants.SP_REDIRECT_URI,
+                scope=("user-library-read", "playlist-read-private"),
             ),
         ),
     )
@@ -41,7 +30,7 @@ async def setup_spotify():
 
 
 def cache_file(title):
-    return (CACHE_DIR / title).with_suffix(".m4a")
+    return (constants.CACHE_DIR / title).with_suffix(".m4a")
 
 
 async def readable_cache_for_song(title):
@@ -64,7 +53,7 @@ async def streamify(data, chunk_size):
 
 async def stream_track(track):
     ftitle = ", ".join(a["name"] for a in track["artists"]) + " - " + track["name"]
-    chunk_size = yt.HTTP_CHUNK_SIZE
+    chunk_size = constants.HTTP_CHUNK_SIZE
     read_yet = 0
 
     rcache = await readable_cache_for_song(ftitle)
