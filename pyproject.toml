@@ -6,8 +6,8 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "aiofiles>=24.1.0",
+    "nicegui>=2.8.1",
     "niquests>=3.11.2",
-    "reactpy[fastapi]>=1.1.0",
     "spotipy>=2.24.0",
     "textual>=0.89.1",
     "websockets>=14.1",

@@ -12,18 +12,13 @@ from exse import constants, yt
 log = logging.getLogger(__file__)
 
 
-async def setup_spotify():
-    loop = asyncio.get_running_loop()
-    sp = await loop.run_in_executor(
-        None,
-        functools.partial(
-            spotipy.Spotify,
-            auth_manager=SpotifyOAuth(
-                client_id=constants.SP_CLIENT_ID,
-                client_secret=constants.SP_CLIENT_SECRET,
-                redirect_uri=constants.SP_REDIRECT_URI,
-                scope=("user-library-read", "playlist-read-private"),
-            ),
+def setup_spotify():
+    sp = spotipy.Spotify(
+        auth_manager=SpotifyOAuth(
+            client_id=constants.SP_CLIENT_ID,
+            client_secret=constants.SP_CLIENT_SECRET,
+            redirect_uri=constants.SP_REDIRECT_URI,
+            scope=("user-library-read", "playlist-read-private"),
         ),
     )
     return sp
@@ -53,7 +48,7 @@ async def streamify(data, chunk_size):
 
 async def stream_track(track):
     ftitle = ", ".join(a["name"] for a in track["artists"]) + " - " + track["name"]
-    chunk_size = constants.HTTP_CHUNK_SIZE
+    chunk_size = constants.YT_STREAM_HTTP_CHUNK_SIZE
     read_yet = 0
 
     rcache = await readable_cache_for_song(ftitle)
@@ -65,10 +60,15 @@ async def stream_track(track):
         try:
             chunk = await anext(stream)
         except StopAsyncIteration:
+            log.debug("Fetching stream data from YT.")
+            if not util.is_connected():
+                log.debug("Stopped fetching stream data due to no internet. Breaking.")
+                break
             stream = yt.iter_stream_from_query(ftitle, read_yet)
             try:
                 chunk = await anext(stream)
             except (StopAsyncIteration, ValueError):
+                log.debug("Cannot fetch more streaming data. Breaking.")
                 break
 
         yield chunk
@@ -78,11 +78,15 @@ async def stream_track(track):
     await wcache.close()
 
 
-async def stream_track_from_id(idx: str):
+async def stream_track_from_id(spotify, idx: str):
     loop = asyncio.get_running_loop()
 
-    spotify = await setup_spotify()
     track = await loop.run_in_executor(None, functools.partial(spotify.track, idx))
 
+    async for chunk in stream_track(track):
+        yield chunk
+
+
+async def stream_track_from_track(spotify, track):
     async for chunk in stream_track(track):
         yield chunk

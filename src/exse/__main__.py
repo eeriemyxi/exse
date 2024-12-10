@@ -19,7 +19,7 @@ async def cmd_daemon(args):
 async def cmd_stream(args):
     import exse
 
-    spotify = await exse.setup_spotify()
+    spotify = exse.setup_spotify()
     track = spotify.track(args.track_id)
 
     async for chunk in exse.stream_track(track):

@@ -30,3 +30,15 @@ YT_CLIENT = {
     "androidSdkVersion": 30,
 }
 YT_STREAM_HTTP_CHUNK_SIZE = 1024 * 1024
+
+GRUVBOX_COLORS = {
+    "primary": "#427b58",
+    "secondary": "#3c3836",
+    "accent": "#d3869b",
+    "dark": "#282828",
+    "dark_page": "#282828",
+    "positive": "#b5bd68",
+    "negative": "#fb4934",
+    "info": "#668cc0",
+    "warning": "#f2c037",
+}
