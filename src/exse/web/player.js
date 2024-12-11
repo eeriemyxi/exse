@@ -31,7 +31,7 @@ export default {
                 }
                 
                 source.addEventListener("updateend", process_chunks);
-                const ws_url = "ws://192.168.29.35:8765";
+                const ws_url = `ws://${this.host}:${this.port}`;
                 const ws = new WebSocket(ws_url);
                 ws.binaryType = "arraybuffer";
 
@@ -47,5 +47,7 @@ export default {
         }
     },
     props: {
+        host: String,
+        port: Number,
     },
 };

@@ -18,7 +18,6 @@ export default {
     onmousedown="this.style.backgroundColor='#665c54';"
     onmouseup="this.style.backgroundColor='#3c3836';">
     <div style="font-weight: bold; font-size: 1.1em;">{{title}}</div>
-    <div style="font-size: 0.9em; color: #8a7d6c; text-align: right;">{{artist}}</div>
     </button>
     `,
     data() {
@@ -31,6 +30,5 @@ export default {
     },
     props: {
         title: String,
-        artist: String
     },
 };

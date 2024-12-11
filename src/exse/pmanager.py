@@ -42,6 +42,12 @@ class PlaylistManager:
         if should_load_cache:
             self.playlists = self.load_cache(self.cache_path)
 
+    def update_event_loop(self):
+        self.loop = asyncio.get_running_loop()
+
+    def set_spotify(self, spotify):
+        self.spotify = spotify
+
     def load_cache(self, cache_path: pathlib.Path):
         data = {}
         if not cache_path.exists():
@@ -103,7 +109,7 @@ class PlaylistManager:
             tracks = await self.loop.run_in_executor(
                 None,
                 functools.partial(
-                    self.spotify.current_user_saved_tracks, offset=offset
+                    self.spotify.current_user_saved_tracks, offset=offset, limit=50
                 ),
             )
             tracks = tracks["items"]
@@ -112,9 +118,12 @@ class PlaylistManager:
             tracks = await self.loop.run_in_executor(
                 None,
                 functools.partial(
-                    self.spotify.playlist_tracks, playlist_id, offset=offset
+                    self.spotify.playlist_tracks, playlist_id, offset=offset, limit=100
                 ),
             )
+
+        if not tracks:
+            return None
 
         playlist = self.playlists.get(
             playlist_id,
